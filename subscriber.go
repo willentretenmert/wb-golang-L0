@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgx"
-	"github.com/nats-io/nats.go"
 	"github.com/nats-io/stan.go"
 	"log"
 	"time"
 )
 
 const (
+	natsURL     = "nats://stan-container:4222"
 	clusterID   = "test-cluster"
 	clientID    = "your-client-id"
 	channelName = "test-subject"
 )
 
 func SubscribeToNATS(conn *pgx.Conn) {
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL(nats.DefaultURL), stan.ConnectWait(5*time.Second))
+	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL), stan.ConnectWait(5*time.Second))
 	if err != nil {
 		log.Printf("Can't connect to NATS Streaming: %v\n", err)
 		return

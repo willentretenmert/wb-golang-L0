@@ -11,7 +11,7 @@ var cache sync.Map
 
 func main() {
 	conn, err := pgx.Connect(pgx.ConnConfig{
-		Host:     "localhost",
+		Host:     "db-container",
 		Port:     5432,
 		Database: "L0_db",
 		User:     "some_user",
