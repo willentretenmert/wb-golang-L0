@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	natsURL     = "nats://stan-container:4222"
+	natsURL = "nats://localhost:4222"
+	//natsURL     = "nats://stan-container:4222"
 	clusterID   = "test-cluster"
 	clientID    = "your-client-id"
 	channelName = "test-subject"
@@ -25,7 +26,7 @@ func SubscribeToNATS(conn *pgx.Conn) {
 	defer sc.Close()
 
 	_, err = sc.Subscribe(channelName, func(m *stan.Msg) {
-		fmt.Printf("Recieved a message from %s: %s\n", channelName, m)
+		//fmt.Printf("Recieved a message from %s: %s\n", channelName, m)
 		data := m.Data
 		var order Order
 
@@ -40,12 +41,6 @@ func SubscribeToNATS(conn *pgx.Conn) {
 			fmt.Printf("inserting error: %v\n", err2)
 			return
 		}
-
-		//err3 := GetOrder(conn)
-		//if err3 != nil {
-		//	fmt.Printf("error %v\n", err3)
-		//	return
-		//}
 
 		fmt.Printf("Received NATS message: %+v\n", order)
 

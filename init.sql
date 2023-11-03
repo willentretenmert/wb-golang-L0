@@ -1,6 +1,3 @@
-CREATE DATABASE L0_db;
-
-CREATE USER some_user WITH PASSWORD 'zxczxc';
 GRANT ALL PRIVILEGES ON DATABASE L0_db TO some_user;
 
 \c L0_db;

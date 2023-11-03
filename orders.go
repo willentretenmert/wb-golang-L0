@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx"
 	"os"
+	"sync"
 )
 
 func insertOrder(conn *pgx.Conn, order Order) error {
@@ -127,6 +128,7 @@ func insertOrder(conn *pgx.Conn, order Order) error {
 
 func loadOrder(conn *pgx.Conn, orderUID string) (Order, error) {
 	var order Order
+	order.Items = []Item{}
 
 	query := `SELECT
     o.order_uid, o.track_number, o.entry, o.locale,
@@ -146,7 +148,7 @@ FROM
         JOIN
     items i ON o.order_uid = i.order_uid
 WHERE
-        o.order_uid = ?;`
+        o.order_uid = $1;`
 	rows, err := conn.Query(query, orderUID)
 	if err != nil {
 		return order, err
@@ -207,15 +209,12 @@ WHERE
 			return order, err
 		}
 
-		// Добавляем первый полученный item в список
-		if order.Items == nil {
+		if len(order.Items) == 0 {
 			order.Delivery = delivery
 			order.Payment = payment
-			order.Items = append(order.Items, item)
-		} else {
-			// Поскольку Delivery и Payment уже установлены, добавляем только Items
-			order.Items = append(order.Items, item)
 		}
+
+		order.Items = append(order.Items, item)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -225,19 +224,34 @@ WHERE
 	return order, nil
 }
 
-func loadCacheFromDB(conn *pgx.Conn) {
-	var orderUIDs []string
-	_, err := conn.Exec("SELECT order_uid FROM orders")
+func loadCacheFromDB(conn *pgx.Conn, cache *sync.Map) error {
+	// Запрашиваем список уникальных orderUID из таблицы orders.
+	rows, err := conn.Query("SELECT DISTINCT order_uid FROM orders")
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		return err
+	}
+	defer rows.Close()
+
+	var orderUIDs []string
+	for rows.Next() {
+		var orderUID string
+		if err := rows.Scan(&orderUID); err != nil {
+			return err
+		}
+		orderUIDs = append(orderUIDs, orderUID)
 	}
 
 	for _, uid := range orderUIDs {
 		order, err := loadOrder(conn, uid)
 		if err != nil {
-			fmt.Printf("Failed to load order %s: %v", uid, err)
-			continue
+			return err
 		}
 		cache.Store(uid, order)
+		fmt.Printf("Order %s loaded into cache\n", uid)
 	}
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	return nil
 }
