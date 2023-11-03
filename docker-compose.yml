@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: db-container
+    environment:
+      POSTGRES_DB: L0_db
+      POSTGRES_USER: some_user
+      POSTGRES_PASSWORD: zxczxc
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U some_user -d L0_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  go-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server-container
+    depends_on:
+      db:
+        condition: service_healthy
+      nats-streaming:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+  nats-streaming:
+    image: nats-streaming:latest
+    container_name: stan-container
+    ports:
+      - "4222:4222"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
