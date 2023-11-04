@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgx"
+	"html/template"
 	"log"
 	"net/http"
 	"sync"
@@ -15,10 +15,10 @@ var (
 )
 
 func main() {
+	hostIP := "localhost"
+	// hostIP := "db-container"
 
-	hostIP = "localhost"
-	//hostIP = "db-container"
-
+	// Подключение к базе данных
 	conn, err := pgx.Connect(pgx.ConnConfig{
 		Host:     hostIP,
 		Port:     5432,
@@ -31,30 +31,51 @@ func main() {
 	}
 	defer conn.Close()
 
-	loadCacheFromDB(conn, &cache)
-	//fmt.Println(">>> CACHE LOADED: ")
-	//fmt.Println(cache.Load("993somemoreuid666"))
-	//fmt.Println(cache.Load("b563feb7b2b84b6test"))
+	// Подписка на сообщения NATS в фоновом режиме
+	go SubscribeToNATS(conn)
+
+	// Настройка обработчика запросов кэша
 	http.HandleFunc("/", cacheHandler)
-	http.ListenAndServe(":8000", nil)
 
-	SubscribeToNATS(conn)
-
-	select {}
+	// Запуск HTTP-сервера
+	fmt.Println("Starting server on port :8000")
+	if err := http.ListenAndServe(":8000", nil); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }
 
 func cacheHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Received request for cache data")
-	cacheData := make(map[string]interface{})
-	cache.Range(func(key, value interface{}) bool {
-		cacheData[key.(string)] = value
-		return true
-	})
+	// Получаем параметр запроса 'orderUID'
+	orderUID := r.URL.Query().Get("orderUID")
 
-	w.Header().Set("Content-Type", "application/json")
+	// Проверяем, есть ли такой ключ в кэше
+	value, ok := cache.Load(orderUID)
+	if !ok {
+		// Если в кэше нет значения, отправляем ошибку 404
+		http.Error(w, "Order not found", http.StatusNotFound)
+		return
+	}
 
-	err := json.NewEncoder(w).Encode(cacheData)
+	// Приводим значение к ожидаемому типу, в данном случае к типу Order
+	order, ok := value.(Order)
+	if !ok {
+		// Если не удается привести к типу Order, отправляем ошибку сервера
+		http.Error(w, "Error converting cached data to type Order", http.StatusInternalServerError)
+		return
+	}
+
+	// Загружаем HTML шаблон
+	tmpl, err := template.ParseFiles("template.html")
 	if err != nil {
-		fmt.Println("Error encoding cache data:", err)
+		fmt.Println("Error loading template:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Выполняем рендеринг шаблона с данными
+	err = tmpl.Execute(w, order)
+	if err != nil {
+		fmt.Println("Error executing template:", err)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

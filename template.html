@@ -2,12 +2,152 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details</title>
 </head>
 <body>
-    <h1>Order Details</h1>
-    <p><strong>OrderUID:</strong> {{.OrderUID}}</p>
-<!-- Добавьте другие поля здесь -->
+
+<h1>Order Details</h1>
+
+TrackNumber: {{ .TrackNumber }} <br>
+Entry: {{ .Entry }}
+Locale: {{ .Locale }}
+InternalSignature: {{ .InternalSignature }}
+CustomerID: {{ .CustomerID }}
+DeliveryService: {{ .DeliveryService }}
+Shardkey: {{ .Shardkey }}
+SmID: {{ .SmID }}
+DateCreated: {{ .DateCreated }}
+OofShard: {{ .OofShard }}
+
+
+<h2>Delivery</h2>
+<table>
+    <tr>
+        <th>Name</th>
+        <td>{{ .Delivery.Name }}</td>
+    </tr>
+    <tr>
+        <th>Phone</th>
+        <td>{{ .Delivery.Phone }}</td>
+    </tr>
+    <tr>
+        <th>Zip</th>
+        <td>{{ .Delivery.Zip }}</td>
+    </tr>
+    <tr>
+        <th>City</th>
+        <td>{{ .Delivery.City }}</td>
+    </tr>
+    <tr>
+        <th>Address</th>
+        <td>{{ .Delivery.Address }}</td>
+    </tr>
+    <tr>
+        <th>Region</th>
+        <td>{{ .Delivery.Region }}</td>
+    </tr>
+    <tr>
+        <th>Email</th>
+        <td>{{ .Delivery.Email }}</td>
+    </tr>
+</table>
+
+<h2>Payment</h2>
+<table>
+    <tr>
+        <th>Transaction</th>
+        <td>{{ .Payment.Transaction }}</td>
+    </tr>
+    <tr>
+        <th>RequestID</th>
+        <td>{{ .Payment.RequestID }}</td>
+    </tr>
+    <tr>
+        <th>Currency</th>
+        <td>{{ .Payment.Currency }}</td>
+    </tr>
+    <tr>
+        <th>Provider</th>
+        <td>{{ .Payment.Provider }}</td>
+    </tr>
+    <tr>
+        <th>Amount</th>
+        <td>{{ .Payment.Amount }}</td>
+    </tr>
+    <tr>
+        <th>PaymentDt</th>
+        <td>{{ .Payment.PaymentDt }}</td>
+    </tr>
+    <tr>
+        <th>Bank</th>
+        <td>{{ .Payment.Bank }}</td>
+    </tr>
+    <tr>
+        <th>DeliveryCost</th>
+        <td>{{ .Payment.DeliveryCost }}</td>
+    </tr>
+    <tr>
+        <th>GoodsTotal</th>
+        <td>{{ .Payment.GoodsTotal }}</td>
+    </tr>
+    <tr>
+        <th>CustomFee</th>
+        <td>{{ .Payment.CustomFee }}</td>
+    </tr>
+</table>
+
+<h2>Items</h2>
+<ul>
+    {{ range .Items }}
+        <table>
+            <tr>
+                <th>ChrtID</th>
+                <td>{{ .ChrtID }}</td>
+            </tr>
+            <tr>
+                <th>TrackNumber</th>
+                <td>{{ .TrackNumber }}</td>
+            </tr>
+            <tr>
+                <th>Price</th>
+                <td>{{ .Price }}</td>
+            </tr>
+            <tr>
+                <th>RID</th>
+                <td>{{ .RID }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ .Name }}</td>
+            </tr>
+            <tr>
+                <th>Sale</th>
+                <td>{{ .Sale }}</td>
+            </tr>
+            <tr>
+                <th>Size</th>
+                <td>{{ .Size }}</td>
+            </tr>
+            <tr>
+                <th>TotalPrice</th>
+                <td>{{ .TotalPrice }}</td>
+            </tr>
+            <tr>
+                <th>NmID</th>
+                <td>{{ .NmID }}</td>
+            </tr>
+            <tr>
+                <th>Brand</th>
+                <td>{{ .Brand }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ .Status }}</td>
+            </tr>
+        </table>
+    <br>
+    {{ end }}
+</ul>
+
 </body>
 </html>

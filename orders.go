@@ -225,7 +225,6 @@ WHERE
 }
 
 func loadCacheFromDB(conn *pgx.Conn, cache *sync.Map) error {
-	// Запрашиваем список уникальных orderUID из таблицы orders.
 	rows, err := conn.Query("SELECT DISTINCT order_uid FROM orders")
 	if err != nil {
 		return err

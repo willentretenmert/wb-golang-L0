@@ -32,7 +32,7 @@ func SubscribeToNATS(conn *pgx.Conn) {
 
 		err1 := json.Unmarshal(data, &order)
 		if err1 != nil {
-			fmt.Printf("error %v\n", err)
+			fmt.Printf("error %v\n", err1)
 			return
 		}
 
@@ -43,11 +43,11 @@ func SubscribeToNATS(conn *pgx.Conn) {
 		}
 
 		fmt.Printf("Received NATS message: %+v\n", order)
-
+		loadCacheFromDB(conn, &cache)
 	}, stan.StartWithLastReceived())
 
 	if err != nil {
-		log.Printf("Error on NATS subscription: %v\n", err)
+		fmt.Printf("Error on NATS subscription: %v\n", err)
 	}
 
 	select {}
