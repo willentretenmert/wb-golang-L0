@@ -12,5 +12,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o go-server .
 FROM alpine
 
 COPY --from=builder /app/go-server /go-server
+COPY --from=builder /app/template.html /template.html
 
 ENTRYPOINT ["/go-server"]

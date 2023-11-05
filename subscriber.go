@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	natsURL = "nats://localhost:4222"
-	//natsURL     = "nats://stan-container:4222"
+	//natsURL = "nats://localhost:4222"
+	natsURL     = "nats://stan-container:4222"
 	clusterID   = "test-cluster"
 	clientID    = "your-client-id"
 	channelName = "test-subject"
@@ -42,8 +42,9 @@ func SubscribeToNATS(conn *pgx.Conn) {
 			return
 		}
 
-		fmt.Printf("Received NATS message: %+v\n", order)
 		loadCacheFromDB(conn, &cache)
+
+		fmt.Printf("Received NATS message: %+v\n", order)
 	}, stan.StartWithLastReceived())
 
 	if err != nil {

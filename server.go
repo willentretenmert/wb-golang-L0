@@ -15,8 +15,8 @@ var (
 )
 
 func main() {
-	hostIP := "localhost"
-	// hostIP := "db-container"
+	//hostIP := "localhost"
+	hostIP := "db-container"
 
 	// Подключение к базе данных
 	conn, err := pgx.Connect(pgx.ConnConfig{
@@ -30,6 +30,8 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer conn.Close()
+
+	loadCacheFromDB(conn, &cache)
 
 	// Подписка на сообщения NATS в фоновом режиме
 	go SubscribeToNATS(conn)
