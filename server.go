@@ -47,25 +47,6 @@ func main() {
 }
 
 func cacheHandler(w http.ResponseWriter, r *http.Request) {
-	// Получаем параметр запроса 'orderUID'
-	orderUID := r.URL.Query().Get("orderUID")
-
-	// Проверяем, есть ли такой ключ в кэше
-	value, ok := cache.Load(orderUID)
-	if !ok {
-		// Если в кэше нет значения, отправляем ошибку 404
-		http.Error(w, "Order not found", http.StatusNotFound)
-		return
-	}
-
-	// Приводим значение к ожидаемому типу, в данном случае к типу Order
-	order, ok := value.(Order)
-	if !ok {
-		// Если не удается привести к типу Order, отправляем ошибку сервера
-		http.Error(w, "Error converting cached data to type Order", http.StatusInternalServerError)
-		return
-	}
-
 	// Загружаем HTML шаблон
 	tmpl, err := template.ParseFiles("template.html")
 	if err != nil {
@@ -74,10 +55,43 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Выполняем рендеринг шаблона с данными
-	err = tmpl.Execute(w, order)
-	if err != nil {
-		fmt.Println("Error executing template:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	// Если запрос - POST, обрабатываем поиск
+	if r.Method == "POST" {
+		// Парсим форму
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Error parsing form", http.StatusInternalServerError)
+			return
+		}
+
+		// Получаем orderUID из формы
+		orderUID := r.FormValue("orderUID")
+
+		// Проверяем, есть ли такой ключ в кэше
+		value, ok := cache.Load(orderUID)
+		if !ok {
+			// Если в кэше нет значения, выводим сообщение об ошибке
+			tmpl.Execute(w, "Order not found")
+			return
+		}
+
+		// Приводим значение к ожидаемому типу, в данном случае к типу Order
+		order, ok := value.(Order)
+		if !ok {
+			// Если не удается привести к типу Order, отправляем сообщение об ошибке
+			tmpl.Execute(w, "Error converting cached data to type Order")
+			return
+		}
+
+		// Выполняем рендеринг шаблона с данными заказа
+		err = tmpl.Execute(w, order)
+		if err != nil {
+			fmt.Println("Error executing template:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
 	}
+
+	// Если запрос - GET, показываем форму поиска
+	tmpl.Execute(w, nil)
 }

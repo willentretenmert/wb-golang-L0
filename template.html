@@ -5,6 +5,11 @@
     <title>Order Details</title>
 </head>
 <body>
+{{ if . }}
+<form action="/" method="post">
+    <input type="text" name="orderUID" required placeholder="Enter OrderUID"/>
+    <input type="submit" value="Search"/>
+</form>
 
 <h1>Order Details</h1>
 
@@ -148,6 +153,11 @@ OofShard: {{ .OofShard }}
     <br>
     {{ end }}
 </ul>
-
+{{ else }}
+<form action="/" method="post">
+    <input type="text" name="orderUID" required placeholder="Enter OrderUID"/>
+    <input type="submit" value="Search"/>
+</form>
+{{ end }}
 </body>
 </html>
