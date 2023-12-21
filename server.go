@@ -3,20 +3,28 @@ package main
 import (
 	"fmt"
 	"github.com/jackc/pgx"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"html/template"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
-	hostIP string
-	cache  sync.Map
+	hostIP       string
+	cache        sync.Map
+	opsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "myapp_processed_ops_total",
+		Help: "The total number of processed events",
+	})
 )
 
 func main() {
-	//hostIP := "localhost"
-	hostIP := "db-container"
+	//hostIP = "localhost"
+	hostIP = "postgres"
 
 	// Подключение к базе данных
 	conn, err := pgx.Connect(pgx.ConnConfig{
@@ -35,6 +43,9 @@ func main() {
 
 	// Подписка на сообщения NATS в фоновом режиме
 	go SubscribeToNATS(conn)
+
+	recordMetrics()
+	http.Handle("/metrics", promhttp.Handler())
 
 	// Настройка обработчика запросов кэша
 	http.HandleFunc("/", cacheHandler)
@@ -94,4 +105,13 @@ func cacheHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Если запрос - GET, показываем форму поиска
 	tmpl.Execute(w, nil)
+}
+
+func recordMetrics() {
+	go func() {
+		for {
+			opsProcessed.Inc()
+			time.Sleep(2 * time.Second)
+		}
+	}()
 }

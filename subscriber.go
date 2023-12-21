@@ -11,7 +11,7 @@ import (
 
 const (
 	//natsURL = "nats://localhost:4222"
-	natsURL     = "nats://stan-container:4222"
+	natsURL     = "nats://stan:4222"
 	clusterID   = "test-cluster"
 	clientID    = "your-client-id"
 	channelName = "test-subject"

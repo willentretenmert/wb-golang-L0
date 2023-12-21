@@ -3,7 +3,7 @@ version: '3.9'
 services:
   db:
     image: postgres:latest
-    container_name: db-container
+    container_name: postgres
     environment:
       POSTGRES_DB: L0_db
       POSTGRES_USER: some_user
@@ -37,11 +37,101 @@ services:
 
   nats-streaming:
     image: nats-streaming:latest
-    container_name: stan-container
+    container_name: stan
     ports:
       - "4222:4222"
     networks:
       - app-network
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    networks:
+      - app-network
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./docker-config.yaml:/etc/promtail/docker-config.yaml
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - app-network
+    command: -config.file=/etc/promtail/docker-config.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    environment:
+      - GF_EXPLORE_ENABLED=true
+
+  cadvisor:
+    image: google/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - .\prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
+  keycloak-db:
+    image: postgres:latest
+    container_name: keycloak_db_container
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_password
+    volumes:
+      - keycloak_db:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  keycloak:
+    image: jboss/keycloak:latest
+    container_name: keycloak_container
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /tmp/keycloak-config.json
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak-db
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: keycloak_password
+    ports:
+      - "9080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - keycloak-db
+    volumes:
+      - ./keycloak-config.json:/tmp/keycloak-config.json
+    command:
+      - "-b 0.0.0.0"
+
+volumes:
+  keycloak_db:
+  prometheus:
+    name: prometheus
+
 
 networks:
   app-network:
